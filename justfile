@@ -23,6 +23,15 @@ ALCHEMY_KEY := env_var("ALCHEMY_KEY")
 MAINNET_RPC := "https://eth-mainnet.alchemyapi.io/v2/" + ALCHEMY_KEY
 MNEMONIC    := env_var("MNEMONIC")
 
+
+
+
+
+
+size:
+	forge build --sizes --force
+
+
 # build using forge
 build: && _timer
 	cd {{ invocation_directory() }}; forge build
@@ -42,6 +51,8 @@ test-mainnet *commands="": && _timer
 
 
 
+
+# utility functions
 start_time := `date +%s`
 _timer:
 	@echo "Task executed in $(($(date +%s) - {{ start_time }})) seconds"
