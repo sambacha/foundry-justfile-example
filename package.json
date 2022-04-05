@@ -1,0 +1,23 @@
+{
+  "name": "dummy-forge",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sambacha/foundry-justfile-example.git"
+  },
+  "keywords": [],
+  "author": "sam bacha",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sambacha/foundry-justfile-example/issues"
+  },
+  "homepage": "https://github.com/sambacha/foundry-justfile-example#readme"
+}
