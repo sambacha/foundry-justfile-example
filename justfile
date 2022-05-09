@@ -8,16 +8,13 @@ log := "warn"
 
 export JUST_LOG := log
 
-_default:
-  just --list
-
 # load .env file
 set dotenv-load
 
 # pass recipe args as positional arguments to commands
 set positional-arguments
 
-## ---- Environment ----
+##<><><>< Environment ----
 
 HEX_18 := "0x0000000000000000000000000000000000000000000000000000000000000012"
 HEX_12 := "0x000000000000000000000000000000000000000000000000000000000000000c"
@@ -30,16 +27,22 @@ FORGE_MOCK_UNDERLYING_DECIMALS := env_var_or_default("FORGE_MOCK_UNDERLYING_DECI
 
 DAPP_BUILD_OPTIMIZE := "1"
 DAPP_COVERAGE       := "1"
+DAPP_REMAPPINGS   := remappings-from-pkg-deps
+
 # when developing we only want to fuzz briefly
 DAPP_TEST_FUZZ_RUNS := "100"
 
+
 ALCHEMY_KEY := env_var("ALCHEMY_KEY")
 MAINNET_RPC := "https://eth-mainnet.alchemyapi.io/v2/" + ALCHEMY_KEY
-MNEMONIC    := env_var("MNEMONIC")
+MNEMONIC    := env_var_or_default("MNEMONIC", "")
+ETHERSCAN_API_KEY := env_var_or_default("ETHERSCAN_API_KEY", "")
 
 # export just vars as env vars
 set export
 
+_default:
+  just --list
 
 size:
 	forge build --sizes --force
@@ -62,6 +65,12 @@ test-local *commands="": && _timer
 test-mainnet *commands="": && _timer
 	cd {{ invocation_directory() }}; forge test --rpc-url {{ MAINNET_RPC }} -m ".debug.sol" {{ commands }}
 
+turbo-test-mainnet: && _timer
+	@cd {{ invocation_directory() }}; forge test --match-path "*.t*" --fork-url {{ MAINNET_RPC }}
+
+turbo-test-mainnet-match *exp="": && _timer
+	@cd {{ invocation_directory() }}; forge test --match-path "*.t*" --fork-url {{ MAINNET_RPC }} --match-test {{ exp }}
+	
 
 gas-snapshot: gas-snapshot-local
 
@@ -92,3 +101,15 @@ _forge_mock_target_decimals:
 
 _forge_mock_underlying_decimals:
     @printf {{ FORGE_MOCK_UNDERLYING_DECIMALS }}
+
+remappings-from-pkg-deps := ```
+    cat pkg/*/package.json  |
+    jq 'select(.dependencies != null) | .dependencies | to_entries | map([.key + "/", "../../node_modules/" + .key + "/"] | join("="))' |
+    tr -d '[],"' | xargs | tr ' ' '\n' | sort | uniq
+```
+
+lib-paths-from-pkg-deps := ```
+    cat pkg/*/package.json |
+    jq 'select(.dependencies != null) | .dependencies | to_entries | map("../../node_modules/" + .key + "/")' |
+    tr -d '[],"' | xargs | tr ' ' '\n' | sort | uniq | awk '{print "--lib-paths " $0}' | tr '\n' ' '
+  ```
